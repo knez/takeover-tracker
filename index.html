@@ -238,8 +238,6 @@ footer a:hover{text-decoration:underline}
 (function(){
 'use strict';
 const SNAP = JSON.parse(document.getElementById('snapshot').textContent);
-const CSU_URL = 'https://data.csu.gov.cz/api/dotaz/v1/data/sady/WADMUPCRMC';
-const MPSV_URL = 'https://data.mpsv.cz/portal/api/reports/by-table/evid_pno_up_agr_frz_odata/data/json?unbounded=true';
 const NAME2CODE = {'Hlavní město Praha':'CZ010','Středočeský kraj':'CZ020','Jihočeský kraj':'CZ031','Plzeňský kraj':'CZ032','Karlovarský kraj':'CZ041','Ústecký kraj':'CZ042','Liberecký kraj':'CZ051','Královéhradecký kraj':'CZ052','Pardubický kraj':'CZ053','Kraj Vysočina':'CZ063','Jihomoravský kraj':'CZ064','Olomoucký kraj':'CZ071','Zlínský kraj':'CZ072','Moravskoslezský kraj':'CZ080'};
 const ORDER = ['CZ','CZ010','CZ020','CZ031','CZ032','CZ041','CZ042','CZ051','CZ052','CZ053','CZ063','CZ064','CZ071','CZ072','CZ080'];
 const LABEL_EN = {CZ:'Czechia',CZ010:'Prague',CZ020:'Central Bohemian Region',CZ031:'South Bohemian Region',CZ032:'Plzeň Region',CZ041:'Karlovy Vary Region',CZ042:'Ústí nad Labem Region',CZ051:'Liberec Region',CZ052:'Hradec Králové Region',CZ053:'Pardubice Region',CZ063:'Vysočina Region',CZ064:'South Moravian Region',CZ071:'Olomouc Region',CZ072:'Zlín Region',CZ080:'Moravian-Silesian Region'};
@@ -290,7 +288,6 @@ const state = {
 if(ORDER.indexOf(state.region)<0) state.region='CZ';
 if(state.lang!=='cs'&&state.lang!=='en') state.lang='cs';
 let regions = null;          // {code:{label, map:{ym:v}}}
-let source = {state:'snapshot', asOf:SNAP.asOf, fetched:SNAP.fetched, notes:[]};
 
 function t(k){ return I18N[state.lang][k]; }
 function fmtPct(v, digits){ return v==null?'–':new Intl.NumberFormat('en-GB',{minimumFractionDigits:digits==null?1:digits,maximumFractionDigits:digits==null?1:digits}).format(v)+' %'; }
@@ -311,88 +308,11 @@ function snapshotRegions(){
   }
   return out;
 }
-function parseCSU(js){
-  const dims=js.dimension, size=js.size, ids=js.id, val=js.value;
-  const iI=ids.indexOf('IndicatorType'), iT=ids.indexOf('CasM'), iG=ids.indexOf('UZ02HU');
-  if(iI<0||iT<0||iG<0) throw new Error('csu shape');
-  const ind=dims.IndicatorType.category.index['5973DI']; if(ind==null) throw new Error('csu indicator');
-  const tIdx=dims.CasM.category.index, gIdx=dims.UZ02HU.category.index, gLab=dims.UZ02HU.category.label;
-  const stride=[1,1,1]; // compute strides for arbitrary order
-  const s=[]; let acc=1; for(let k=size.length-1;k>=0;k--){ s[k]=acc; acc*=size[k]; }
-  const out={};
-  for(const code of Object.keys(gIdx)){
-    const map={};
-    for(const ym of Object.keys(tIdx)){
-      const pos=[]; pos[iI]=ind; pos[iT]=tIdx[ym]; pos[iG]=gIdx[code];
-      const flat=pos.reduce((a,p,k)=>a+p*s[k],0);
-      const v=Array.isArray(val)?val[flat]:val[String(flat)];
-      if(v!=null && /^\d{4}-\d{2}$/.test(ym)) map[ym]=Math.round(v*1000)/1000;
-    }
-    out[code]={label:gLab[code],map};
-  }
-  if(!out.CZ) throw new Error('csu CZ');
-  return out;
-}
-function parseMPSV(rows){
-  if(!Array.isArray(rows)||!rows.length) throw new Error('mpsv shape');
-  const agg={}; // code -> ym -> [seekers, pop]
-  for(const r of rows){
-    const ym=String(r.rozhodne_datum||'').slice(0,7); const kc=NAME2CODE[r.kraj];
-    const a=+r.pocet_uchazeci_dosazitelni, b=+r.pocet_obyvatel_vek_15_64;
-    if(!/^\d{4}-\d{2}$/.test(ym)||!isFinite(a)||!isFinite(b)) continue;
-    for(const code of kc?['CZ',kc]:['CZ']){
-      const m=(agg[code]=agg[code]||{}); const c=(m[ym]=m[ym]||[0,0]); c[0]+=a; c[1]+=b;
-    }
-  }
-  const out={};
-  for(const code of Object.keys(agg)){ out[code]={map:{}}; for(const ym of Object.keys(agg[code])){ const [a,b]=agg[code][ym]; if(b>0) out[code].map[ym]=Math.round(100000*a/b)/1000; } }
-  if(!out.CZ) throw new Error('mpsv CZ');
-  return out;
-}
-function merge(base, csu, mpsv){
-  const out={};
-  for(const code of ORDER){
-    const map=Object.assign({}, base[code]?base[code].map:{});
-    if(csu&&csu[code]) Object.assign(map, csu[code].map);
-    if(mpsv&&mpsv[code]) Object.assign(map, mpsv[code].map);
-    out[code]={label:(base[code]&&base[code].label)||(csu&&csu[code]&&csu[code].label)||code, map};
-  }
-  return out;
-}
 function seriesPoints(code){
   const map=regions[code].map; const keys=Object.keys(map).sort(cmpYm); if(!keys.length) return [];
   const pts=[]; let ym=keys[0]; const last=keys[keys.length-1];
   while(cmpYm(ym,last)<=0){ pts.push({ym, v:map[ym]==null?null:map[ym]}); ym=addMonths(ym,1); }
   return pts;
-}
-function lastYm(){ const p=seriesPoints('CZ'); return p.length?p[p.length-1].ym:SNAP.asOf; }
-
-async function fetchJson(url, ms){
-  const ctl=new AbortController(); const id=setTimeout(()=>ctl.abort(), ms||20000);
-  try{ const r=await fetch(url,{signal:ctl.signal, headers:{accept:'application/json'}}); if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }
-  finally{ clearTimeout(id); }
-}
-async function loadLive(force){
-  const cache=store.get('pno.cache',null);
-  const now=Date.now();
-  if(!force && cache && cache.regions && now-cache.at < 6*3600*1000){
-    regions=merge(snapshotRegions(), null, null); regions=merge(regions, cache.regions, null);
-    source={state:'cached', fetched:new Date(cache.at).toISOString().slice(0,10), asOf:lastYm(), notes:[]};
-    render(); return;
-  }
-  setStatus('loading');
-  const [c,m]=await Promise.allSettled([fetchJson(CSU_URL,25000).then(parseCSU), fetchJson(MPSV_URL,30000).then(parseMPSV)]);
-  const notes=[];
-  const csu=c.status==='fulfilled'?c.value:(notes.push('partialCsu'),null);
-  const mpsv=m.status==='fulfilled'?m.value:(notes.push('partialMpsv'),null);
-  regions=merge(snapshotRegions(), csu, mpsv);
-  if(csu||mpsv){
-    const live=merge({}, csu, mpsv); store.set('pno.cache',{at:now, regions:live});
-    source={state:'live', fetched:new Date(now).toISOString().slice(0,10), asOf:lastYm(), notes};
-  } else {
-    source={state:'error', fetched:SNAP.fetched, asOf:lastYm(), notes};
-  }
-  render();
 }
 
 // ---------- AI 2027 scenario model ----------
@@ -443,9 +363,6 @@ function applyI18n(){
   document.getElementById('delay-field').hidden=state.scen==='off';
   document.getElementById('method-body').innerHTML=t('mBody');
 }
-function setStatus(st){
-  const err=document.getElementById('err'); err.textContent=''; err.classList.remove('show');
-}
 
 // ---------- ui: render ----------
 function currentSlice(){
@@ -459,7 +376,7 @@ function currentSlice(){
 }
 function deltaClass(v){ return v==null?'':v>0?'good':v<0?'bad':''; }
 function render(){
-  applyI18n(); setStatus();
+  applyI18n();
   const {all,pts}=currentSlice(); if(!pts.length) return;
   const idx=i=>all.findIndex(p=>p.ym===pts[i].ym);
   const last=pts[pts.length-1]; const li=idx(pts.length-1);
@@ -586,6 +503,5 @@ let rt; new ResizeObserver(()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(region
 
 // ---------- boot ----------
 regions=snapshotRegions(); render();
-loadLive(false).catch(()=>{ source={state:'error',asOf:lastYm(),fetched:SNAP.fetched,notes:[]}; render(); });
 })();
 </script>

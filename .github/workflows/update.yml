@@ -1,0 +1,68 @@
+name: Update data and deploy
+
+on:
+  schedule:
+    # MPSV publishes the previous month around the 8th–9th; check daily 5th–16th, 06:15 UTC
+    - cron: "15 6 5-16 * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.upd.outputs.changed }}
+      asof: ${{ steps.upd.outputs.asof }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch latest data
+        id: upd
+        run: python scripts/update_data.py
+
+      - name: Commit new month
+        if: steps.upd.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html data/
+          git commit -m "Data through ${{ steps.upd.outputs.asof }}"
+          git push
+
+      - name: Prepare site
+        run: |
+          mkdir -p _site/data
+          cp index.html _site/
+          cp data/pno.json data/pno.csv _site/data/
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
