@@ -104,7 +104,10 @@ svg.chart .dot{fill:var(--series-strong);stroke:var(--surface);stroke-width:2}
 svg.chart .xhair{stroke:var(--axis);stroke-width:1;shape-rendering:crispEdges}
 svg.chart .hoverband{fill:var(--hover-wash)}
 svg.chart .dlabel{fill:var(--ink);font-weight:600;font-size:12.5px}
-svg.chart .hit{fill:transparent;cursor:crosshair}
+svg.chart .hit{fill:transparent;cursor:crosshair;touch-action:pan-y}
+svg.chart .brush{fill:var(--series-wash);stroke:var(--series);stroke-width:1;shape-rendering:crispEdges;pointer-events:none}
+.seg button.reset{color:var(--series-strong)}
+.seg button.reset[hidden]{display:none}
 svg.chart .pline{fill:none;stroke:var(--pred);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:6 4}
 svg.chart .pdot{fill:var(--pred);stroke:var(--surface);stroke-width:2}
 svg.chart .bar.pred{fill:var(--pred);opacity:.75}
@@ -184,6 +187,7 @@ footer a:hover{text-decoration:underline}
       <button type="button" data-n="60">5 r</button>
       <button type="button" data-n="120">10 r</button>
       <button type="button" data-n="0" data-i18n="all">Vše</button>
+      <button type="button" class="reset" data-n="reset" data-i18n="resetZoom" hidden>↺ Zrušit výběr</button>
     </div>
     <div class="field">
       <label for="scen" data-i18n="scen">Scénář AI 2027</label>
@@ -264,7 +268,7 @@ const I18N = {
     stSnapshot:'Data do {m}',stLoading:'Načítám aktuální data…',stLive:'Aktuální data · do {m}',stCached:'Data do {m}',stError:'Data do {m}',
     partialCsu:'',partialMpsv:'',
     chartMeta:'{n} měsíců · {a} – {b}',mom:'meziměsíčně',yoy:'meziročně',rangeLbl:{ytd:'od ledna {y}',12:'1 rok',36:'3 roky',60:'5 let',120:'10 let',0:'od 2005'},
-    scen:'Scénář AI 2027',scenOff:'Vypnuto',scenRace:'Konec „Race“',scenSlow:'Konec „Slowdown“',pace:'Tempo',pace0:'Podle scénáře',pace12:'O rok pomaleji',pace24:'O dva roky pomaleji',
+    resetZoom:'↺ Zrušit výběr',customLbl:'výběr {a} – {b}',scen:'Scénář AI 2027',scenOff:'Vypnuto',scenRace:'Konec „Race“',scenSlow:'Konec „Slowdown“',pace:'Tempo',pace0:'Podle scénáře',pace12:'O rok pomaleji',pace24:'O dva roky pomaleji',
     legActual:'Skutečnost (MPSV)',legPred:'Scénář AI 2027 · {e} · od {s} do {m}',estimate:'náš odhad',detailTitle:'Detail skutečnosti',detailMeta:'vlastní měřítko osy',endRace:'konec „Race“',endSlow:'konec „Slowdown“',thPred:'Scénář (%)',tipPred:'scénář',tipMs:'Milník scénáře',
     ms:{late2026:['AI začíná brát práci','Late 2026: „AI Takes Some Jobs“ – trh juniorních programátorů v rozvratu, 10 000 lidí protestuje ve Washingtonu.'],agent3mini:['Agent-3-mini veřejně','Červenec 2027: „The Cheap Remote Worker“ – model 10× levnější a lepší než typický zaměstnanec OpenBrain; nábor programátorů téměř ustal; vláda slibuje rekvalifikace a podporu v nezaměstnanosti.'],agent5:['Agent-5 v ekonomice','Přelom 2027/28: Agent-5 nasazen veřejně a „začíná transformovat ekonomiku“; HDP roste, lidé přicházejí o práci.'],sez:['Zvláštní ekonomické zóny','2028: USA a Čína zakládají SEZ, Wall Street investuje biliony, „propuštění lidé se hrnou“ za vysokými platy do nových továren.'],robots:['Milion robotů měsíčně','Konec 2028: továrny produkují milion nových robotů měsíčně; robotická ekonomika se zdvojnásobuje rychleji než za rok.'],ubi:['Charáda práce a UBI','Konec 2029: „Všichni ostatní buď předstírají výkon své práce, nebo pobírají luxusní základní příjem.“'],takeover:['2030: převzetí','Scénář „Race“ končí v roce 2030 převzetím kontroly AI; projekce dále nemá smysl.'],pause:['Pauza a Safer-1','Listopad 2027: OpenBrain po úniku memo zastavuje Agent-4, přechází na Safer modely; Kongres schvaluje jednorázové platby propuštěným.'],sezS:['Zvláštní ekonomické zóny','2028: SEZ pro robotickou ekonomiku, továrny jedou nonstop s čerstvě najatými lidmi řízenými AI.'],election:['Volby 2028: základní příjem','Listopad 2028: „lidé vidí zrychlující ztráty pracovních míst“; obě strany slibují základní příjem pro každého, kdo přijde o práci.'],robotsS:['Roboti běžní','2029: „Roboti se stávají běžnými“; Safer-4 řídí ekonomickou transformaci, HDP roste stratosféricky.'],ubiS:['Většinu práce dělají AI','2030: „Za pár let budou téměř vše dělat AI a roboti“; část lidí má provizorní státní místa, ostatní pobírají štědrý základní příjem.']},
     mSummary:'Jak je scénář AI 2027 přepočten na nezaměstnanost',
@@ -278,7 +282,7 @@ const I18N = {
     stSnapshot:'Data through {m}',stLoading:'Loading current data…',stLive:'Live data · through {m}',stCached:'Data through {m}',stError:'Data through {m}',
     partialCsu:'',partialMpsv:'',
     chartMeta:'{n} months · {a} – {b}',mom:'month on month',yoy:'year on year',rangeLbl:{ytd:'since January {y}',12:'1 year',36:'3 years',60:'5 years',120:'10 years',0:'since 2005'},
-    scen:'AI 2027 scenario',scenOff:'Off',scenRace:'“Race” ending',scenSlow:'“Slowdown” ending',pace:'Pace',pace0:'As written',pace12:'One year slower',pace24:'Two years slower',
+    resetZoom:'↺ Reset zoom',customLbl:'selection {a} – {b}',scen:'AI 2027 scenario',scenOff:'Off',scenRace:'“Race” ending',scenSlow:'“Slowdown” ending',pace:'Pace',pace0:'As written',pace12:'One year slower',pace24:'Two years slower',
     legActual:'Actual (MPSV)',legPred:'AI 2027 scenario · {e} · {s} to {m}',estimate:'our estimate',detailTitle:'Actual data, close up',detailMeta:'own axis scale',endRace:'“Race” ending',endSlow:'“Slowdown” ending',thPred:'Scenario (%)',tipPred:'scenario',tipMs:'Scenario milestone',
     ms:{late2026:['AI starts taking jobs','Late 2026: “AI Takes Some Jobs” – junior developer market in turmoil, 10,000-person anti-AI protest in DC.'],agent3mini:['Agent-3-mini goes public','July 2027: “The Cheap Remote Worker” – 10× cheaper and better than a typical OpenBrain employee; hiring of programmers nearly stops; government promises retraining and unemployment insurance.'],agent5:['Agent-5 in the economy','Turn of 2027/28: Agent-5 deployed publicly and “begins to transform the economy”; GDP balloons while people lose jobs.'],sez:['Special economic zones','2028: US and China set up SEZs, Wall Street invests trillions, “displaced human workers pour in” for eye-popping salaries.'],robots:['A million robots a month','End of 2028: factories produce a million new robots a month; the robot economy doubles in under a year.'],ubi:['Charade jobs and UBI','Late 2029: “Everyone else either performs a charade of doing their job or collects an incredibly luxurious universal basic income.”'],takeover:['2030: takeover','The “Race” ending closes in 2030 with an AI takeover; projecting beyond it is meaningless.'],pause:['Pause and Safer-1','November 2027: after the leaked memo OpenBrain halts Agent-4 and moves to Safer models; Congress passes one-off payments to displaced workers.'],sezS:['Special economic zones','2028: SEZs for the robot economy; factories run round the clock with freshly hired humans directed by AI.'],election:['2028 election: basic income','November 2028: “ordinary people see job losses accelerating”; both parties promise a basic income for anyone who loses their job.'],robotsS:['Robots commonplace','2029: “Robots become commonplace”; Safer-4 manages the economic transition, GDP growth is stratospheric.'],ubiS:['AIs do almost everything','2030: “In a few years almost everything will be done by AIs and robots”; some people hold makeshift government jobs, the rest collect a generous basic income.']},
     mSummary:'How the AI 2027 scenario is converted into an unemployment path',
@@ -294,6 +298,7 @@ const state = {
   kind: 'line',
   scen: 'race',
   delay: 0,
+  custom: null,
   table: false,
   hoverYm: null
 };
@@ -370,7 +375,7 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ const k=el.getAttribute('data-i18n'); const s=I18N[state.lang][k]; if(s==null) return; if(k==='src1'||k==='src2') el.innerHTML=s; else el.textContent=s; });
   document.getElementById('toggle-table').textContent=t(state.table?'hideTable':'showTable');
   document.querySelectorAll('#lang button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.l===state.lang)));
-  document.querySelectorAll('#range button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.n===String(state.range))));
+  document.querySelectorAll('#range button').forEach(b=>{ b.setAttribute('aria-pressed', String(!state.custom&&b.dataset.n===String(state.range))); if(b.dataset.n==='reset') b.hidden=!state.custom; });
   document.getElementById('scen').value=state.scen; document.getElementById('delay').value=String(state.delay);
   document.getElementById('delay-field').hidden=state.scen==='off';
   document.getElementById('method-body').innerHTML=t('mBody');
@@ -381,10 +386,12 @@ function currentSlice(){
   const all=seriesPoints(state.region); let pts;
   if(state.range==='ytd'){ const yr=all.length?all[all.length-1].ym.slice(0,4):''; const i=all.findIndex(p=>p.ym===yr+'-01'); pts=i>=0?all.slice(i):all.slice(-1); }
   else { const n=+state.range; pts=n>0?all.slice(-n):all; }
+  if(state.custom) pts=all;
   const pred=scenarioSeries(all);
-  const xs=pts.map(p=>({ym:p.ym, v:p.v, p:null, ms:null, o:false})); const byYm={}; xs.forEach(q=>{ byYm[q.ym]=q; });
+  let xs=pts.map(p=>({ym:p.ym, v:p.v, p:null, ms:null, o:false})); const byYm={}; xs.forEach(q=>{ byYm[q.ym]=q; });
   for(const q of pred){ const e=byYm[q.ym]; if(e){ e.p=q.p; e.ms=q.ms; e.o=!!q.o; } else if(pts.length&&cmpYm(q.ym,pts[pts.length-1].ym)>0) xs.push({ym:q.ym, v:null, p:q.p, ms:q.ms, o:false}); }
-  return {all, pts, pred, xs};
+  if(state.custom){ const [a,b]=state.custom; xs=xs.filter(q=>cmpYm(q.ym,a)>=0&&cmpYm(q.ym,b)<=0); pts=pts.filter(q=>cmpYm(q.ym,a)>=0&&cmpYm(q.ym,b)<=0); if(!pts.length) pts=all.slice(-1); }
+  return {all, pts, pred: xs.filter(q=>q.p!=null&&!q.o), xs};
 }
 function deltaClass(v){ return v==null?'':v>0?'good':v<0?'bad':''; }
 function render(){
@@ -404,16 +411,18 @@ function render(){
   document.getElementById('t4c').innerHTML='<b>'+t('min')+'</b> '+fmtMonth(mn.ym,'short')+' · <b>'+t('max')+'</b> '+fmtMonth(mx.ym,'short');
   // chart head
   const regLabel=state.lang==='cs'?regions[state.region].label:LABEL_EN[state.region];
-  document.getElementById('chart-title').textContent=regLabel+' · '+t('rangeLbl')[state.range].replace('{y}',last.ym.slice(0,4));
+  document.getElementById('chart-title').textContent=regLabel+' · '+(state.custom?t('customLbl').replace('{a}',fmtMonth(state.custom[0],'short')).replace('{b}',fmtMonth(state.custom[1],'short')):t('rangeLbl')[state.range].replace('{y}',last.ym.slice(0,4)));
   document.getElementById('chart-meta').textContent=t('chartMeta').replace('{n}',pts.length).replace('{a}',fmtMonth(pts[0].ym,'short')).replace('{b}',fmtMonth(last.ym,'short'));
-  const {pred,xs}=currentSlice(); const on=pred.length>0;
+  const {pred,xs}=currentSlice(); const on=state.scen!=='off'&&xs.some(q=>q.p!=null);
   document.getElementById('legend').hidden=!on;
-  if(on){ document.getElementById('leg-pred').textContent=t('legPred').replace('{e}',t(state.scen==='race'?'endRace':'endSlow')).replace('{s}',fmtMonth(pred[Math.min(1,pred.length-1)].ym,'short')).replace('{m}',fmtMonth(pred[pred.length-1].ym,'short')); document.getElementById('chart-meta').textContent=t('chartMeta').replace('{n}',xs.length).replace('{a}',fmtMonth(pts[0].ym,'short')).replace('{b}',fmtMonth(pred[pred.length-1].ym,'short')); }
+  if(on&&pred.length){ document.getElementById('leg-pred').textContent=t('legPred').replace('{e}',t(state.scen==='race'?'endRace':'endSlow')).replace('{s}',fmtMonth(pred[0].ym,'short')).replace('{m}',fmtMonth(pred[pred.length-1].ym,'short')); }
+  document.getElementById('chart-meta').textContent=t('chartMeta').replace('{n}',xs.length).replace('{a}',fmtMonth(xs[0].ym,'short')).replace('{b}',fmtMonth(xs[xs.length-1].ym,'short'));
   const ml=document.getElementById('mslist'); ml.innerHTML=''; ml.hidden=!on;
   if(on){ let k=0; xs.forEach(q=>{ if(!q.ms) return; k++; const li=document.createElement('li'); const b=document.createElement('b'); b.textContent=k; const em=document.createElement('em'); em.textContent=fmtMonth(q.ym,'short'); li.appendChild(b); li.appendChild(document.createTextNode(t('ms')[q.ms][0]+' ')); li.appendChild(em); ml.appendChild(li); }); }
   drawChart(xs, all, 'main');
   const det=document.getElementById('detail'); det.hidden=!on;
-  if(on){ document.getElementById('detail-title').textContent=t('detailTitle'); drawChart(xs.filter(q=>q.v!=null), all, 'detail'); }
+  const dpts=xs.filter(q=>q.v!=null); det.hidden=!on||!dpts.length;
+  if(on&&dpts.length){ document.getElementById('detail-title').textContent=t('detailTitle'); drawChart(dpts, all, 'detail'); }
   renderTable(xs, all);
 }
 
@@ -457,9 +466,19 @@ function drawChart(pts, all, key){
   const xh=el('line',{class:'xhair',x1:0,x2:0,y1:M.t,y2:M.t+ph,opacity:0}); svg.appendChild(xh);
   const hit=el('rect',{class:'hit',x:M.l,y:M.t,width:pw,height:ph}); svg.appendChild(hit);
   geoms[key]={pts,all,M,pw,ph,slot,xc,y,W,H,hoverBand,xh};
-  const onMove=ev=>{ const rect=svg.getBoundingClientRect(); const sx=(ev.clientX-rect.left)*(W/rect.width); const i=Math.max(0,Math.min(n-1,Math.floor((sx-M.l)/slot))); setHover(pts[i].ym,key); };
-  hit.addEventListener('pointermove',onMove); hit.addEventListener('pointerdown',onMove);
-  hit.addEventListener('pointerleave',()=>setHover(null,key));
+  const toIdx=ev=>{ const rect=svg.getBoundingClientRect(); const sx=(ev.clientX-rect.left)*(W/rect.width); return Math.max(0,Math.min(n-1,Math.floor((sx-M.l)/slot))); };
+  let brush=null; // {i0, rect}
+  const onMove=ev=>{ const i=toIdx(ev);
+    if(brush){ const a=Math.min(brush.i0,i), b=Math.max(brush.i0,i); brush.rect.setAttribute('x',xc(a)-slot/2); brush.rect.setAttribute('width',slot*(b-a+1)); brush.rect.setAttribute('opacity',1); setHover(pts[i].ym,key); return; }
+    setHover(pts[i].ym,key); };
+  hit.addEventListener('pointermove',onMove);
+  hit.addEventListener('pointerdown',ev=>{ if(key!=='main'||ev.button!==0||ev.pointerType==='touch'){ onMove(ev); return; }
+    const r=el('rect',{class:'brush',x:0,y:M.t,width:0,height:ph,opacity:0}); svg.insertBefore(r,hit); brush={i0:toIdx(ev),rect:r}; hit.setPointerCapture(ev.pointerId); });
+  const endBrush=ev=>{ if(!brush) return; const i=toIdx(ev); const a=Math.min(brush.i0,i), b=Math.max(brush.i0,i); brush.rect.remove(); brush=null;
+    if(b-a>=1){ state.custom=[pts[a].ym,pts[b].ym]; state.hoverYm=null; render(); } else onMove(ev); };
+  hit.addEventListener('pointerup',endBrush); hit.addEventListener('pointercancel',()=>{ if(brush){ brush.rect.remove(); brush=null; } });
+  hit.addEventListener('dblclick',()=>{ if(state.custom){ state.custom=null; state.hoverYm=null; render(); } });
+  hit.addEventListener('pointerleave',()=>{ if(!brush) setHover(null,key); });
   if(state.hoverYm) setHover(state.hoverYm,hoverKey); else setHover(null,key);
 }
 function setHover(ym, key){
@@ -505,7 +524,7 @@ function renderTable(pts, all){
 }
 
 // ---------- events ----------
-document.getElementById('range').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.range=b.dataset.n==='ytd'?'ytd':+b.dataset.n; state.hoverYm=null; render(); });
+document.getElementById('range').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.custom=null; if(b.dataset.n!=='reset') state.range=b.dataset.n==='ytd'?'ytd':+b.dataset.n; state.hoverYm=null; render(); });
 document.getElementById('lang').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.lang=b.dataset.l; store.set('pno2.lang',state.lang); render(); });
 document.getElementById('scen').addEventListener('change',e=>{ state.scen=e.target.value; state.hoverYm=null; render(); });
 document.getElementById('delay').addEventListener('change',e=>{ state.delay=+e.target.value; state.hoverYm=null; render(); });
