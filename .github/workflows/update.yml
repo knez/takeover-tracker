@@ -2,8 +2,10 @@ name: Update data and deploy
 
 on:
   schedule:
-    # MPSV publishes the previous month around the 8th–9th; check daily 5th–16th, 06:15 UTC
-    - cron: "15 6 5-16 * *"
+    # MPSV publishes the previous month on the 8th or 9th (next working day after a weekend).
+    # Check at 12:00 UTC on the 8th–12th, with one fallback on the 16th.
+    - cron: "0 12 8-12 * *"
+    - cron: "0 12 16 * *"
   workflow_dispatch:
   push:
     branches: [main]
@@ -59,6 +61,8 @@ jobs:
 
   deploy:
     needs: update
+    # scheduled runs redeploy only when a new month arrived; pushes and manual runs always deploy
+    if: needs.update.outputs.changed == 'true' || github.event_name != 'schedule'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

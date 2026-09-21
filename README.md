@@ -17,7 +17,7 @@ The MPSV table is published per district and sex; the updater aggregates it to r
 
 ## Updating
 
-MPSV releases each month's figures around the 8th or 9th of the following month. The workflow in `.github/workflows/update.yml` runs every day from the 5th to the 16th, executes `scripts/update_data.py`, commits `index.html` and `data/` only when a new month has appeared, and redeploys GitHub Pages. It can also be run by hand from the Actions tab.
+MPSV releases each month's figures around the 8th or 9th of the following month. The workflow in `.github/workflows/update.yml` runs at 12:00 UTC on the 8th–12th and once more on the 16th, executes `scripts/update_data.py`, commits `index.html` and `data/` only when a new month has appeared, and redeploys GitHub Pages. It can also be run by hand from the Actions tab.
 
 To refresh locally:
 
