@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1c5cab">
 <title>Podíl nezaměstnaných osob</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%231c5cab%22/%3E%3Cpolyline points=%229,47 20,41 30,44 39,36%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%225.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Cpolyline points=%2239,36 46,28 51,20 56,10%22 fill=%22none%22 stroke=%22%23ff8a4c%22 stroke-width=%225.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-dasharray=%227 5%22/%3E%3Ccircle cx=%2239%22 cy=%2236%22 r=%224.5%22 fill=%22%23fff%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,6 +44,8 @@
   --focus:#3987e5;
 }
 *{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
 body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 40px;display:flex;flex-direction:column;gap:20px}
 @media (max-width:480px){.wrap{padding-inline:16px;padding-block:20px 32px;gap:16px}}
@@ -156,6 +165,8 @@ footer a:hover{text-decoration:underline}
 .err.show{display:block}
 @media (prefers-reduced-motion:reduce){.chart-wrap{transition:none}}
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
@@ -506,3 +517,6 @@ let rt; new ResizeObserver(()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(region
 regions=snapshotRegions(); render();
 })();
 </script>
+
+</body>
+</html>
