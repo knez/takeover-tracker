@@ -129,6 +129,10 @@ details.method p{margin:8px 0 4px}
 .tip .d{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin-top:8px;color:var(--ink-2);font-size:12.5px;font-variant-numeric:tabular-nums}
 .tip .d b{font-weight:600;color:var(--ink);text-align:right}
 .tip .d b.bad{color:var(--up-bad)} .tip .d b.good{color:var(--down-good)}
+.detail{display:flex;flex-direction:column;gap:6px;margin-top:6px;padding-top:10px;border-top:1px solid var(--grid)}
+.detail[hidden]{display:none}
+.detail h3{margin:0;font-size:14px;font-weight:600}
+.estimate{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--pred);border:1px solid var(--pred);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:middle}
 .card-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--grid);padding-top:8px}
 .card-foot button{all:unset;cursor:pointer;color:var(--series-strong);font-weight:600}
 .card-foot button:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:3px}
@@ -170,10 +174,6 @@ footer a:hover{text-decoration:underline}
       <button type="button" data-n="120">10 r</button>
       <button type="button" data-n="0" data-i18n="all">Vše</button>
     </div>
-    <div class="seg" id="kind" role="group" aria-label="Typ grafu">
-      <button type="button" data-k="bar" data-i18n="bars">Sloupce</button>
-      <button type="button" data-k="line" data-i18n="line">Čára</button>
-    </div>
     <div class="field">
       <label for="scen" data-i18n="scen">Scénář AI 2027</label>
       <select id="scen"><option value="off" data-i18n="scenOff">Vypnuto</option><option value="race" data-i18n="scenRace">Konec „Race“</option><option value="slowdown" data-i18n="scenSlow">Konec „Slowdown“</option></select>
@@ -201,10 +201,17 @@ footer a:hover{text-decoration:underline}
       <h2 id="chart-title"></h2>
       <span class="meta" id="chart-meta"></span>
     </div>
-    <div class="legend" id="legend" hidden><span><i></i><span data-i18n="legActual">Skutečnost (MPSV)</span></span><span><i class="p"></i><span id="leg-pred"></span></span></div>
+    <div class="legend" id="legend" hidden><span><i></i><span data-i18n="legActual">Skutečnost (MPSV)</span></span><span><i class="p"></i><span id="leg-pred"></span><span class="estimate" data-i18n="estimate">náš odhad</span></span></div>
     <div class="chart-wrap" id="chart-wrap" tabindex="0" role="figure" aria-labelledby="chart-title">
       <svg class="chart" id="chart" xmlns="http://www.w3.org/2000/svg"></svg>
       <div class="tip" id="tip" hidden></div>
+    </div>
+    <div class="detail" id="detail" hidden>
+      <div class="card-head"><h3 id="detail-title"></h3><span class="meta" id="detail-meta" data-i18n="detailMeta">vlastní měřítko</span></div>
+      <div class="chart-wrap" id="chart-wrap-detail" tabindex="0" role="figure" aria-labelledby="detail-title">
+        <svg class="chart" id="chart-detail" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="tip" id="tip-detail" hidden></div>
+      </div>
     </div>
     <ol class="mslist" id="mslist" hidden></ol>
     <div class="card-foot">
@@ -249,7 +256,7 @@ const I18N = {
     partialCsu:'',partialMpsv:'',
     chartMeta:'{n} měsíců · {a} – {b}',mom:'meziměsíčně',yoy:'meziročně',rangeLbl:{ytd:'od ledna {y}',12:'1 rok',36:'3 roky',60:'5 let',120:'10 let',0:'od 2005'},
     scen:'Scénář AI 2027',scenOff:'Vypnuto',scenRace:'Konec „Race“',scenSlow:'Konec „Slowdown“',pace:'Tempo',pace0:'Podle scénáře',pace12:'O rok pomaleji',pace24:'O dva roky pomaleji',
-    legActual:'Skutečnost (MPSV)',legPred:'Scénář AI 2027 · {e} · projekce od {s} do {m}',endRace:'konec „Race“',endSlow:'konec „Slowdown“',thPred:'Scénář (%)',tipPred:'scénář',tipMs:'Milník scénáře',
+    legActual:'Skutečnost (MPSV)',legPred:'Scénář AI 2027 · {e} · od {s} do {m}',estimate:'náš odhad',detailTitle:'Detail skutečnosti',detailMeta:'vlastní měřítko osy',endRace:'konec „Race“',endSlow:'konec „Slowdown“',thPred:'Scénář (%)',tipPred:'scénář',tipMs:'Milník scénáře',
     ms:{late2026:['AI začíná brát práci','Late 2026: „AI Takes Some Jobs“ – trh juniorních programátorů v rozvratu, 10 000 lidí protestuje ve Washingtonu.'],agent3mini:['Agent-3-mini veřejně','Červenec 2027: „The Cheap Remote Worker“ – model 10× levnější a lepší než typický zaměstnanec OpenBrain; nábor programátorů téměř ustal; vláda slibuje rekvalifikace a podporu v nezaměstnanosti.'],agent5:['Agent-5 v ekonomice','Přelom 2027/28: Agent-5 nasazen veřejně a „začíná transformovat ekonomiku“; HDP roste, lidé přicházejí o práci.'],sez:['Zvláštní ekonomické zóny','2028: USA a Čína zakládají SEZ, Wall Street investuje biliony, „propuštění lidé se hrnou“ za vysokými platy do nových továren.'],robots:['Milion robotů měsíčně','Konec 2028: továrny produkují milion nových robotů měsíčně; robotická ekonomika se zdvojnásobuje rychleji než za rok.'],ubi:['Charáda práce a UBI','Konec 2029: „Všichni ostatní buď předstírají výkon své práce, nebo pobírají luxusní základní příjem.“'],takeover:['2030: převzetí','Scénář „Race“ končí v roce 2030 převzetím kontroly AI; projekce dále nemá smysl.'],pause:['Pauza a Safer-1','Listopad 2027: OpenBrain po úniku memo zastavuje Agent-4, přechází na Safer modely; Kongres schvaluje jednorázové platby propuštěným.'],sezS:['Zvláštní ekonomické zóny','2028: SEZ pro robotickou ekonomiku, továrny jedou nonstop s čerstvě najatými lidmi řízenými AI.'],election:['Volby 2028: základní příjem','Listopad 2028: „lidé vidí zrychlující ztráty pracovních míst“; obě strany slibují základní příjem pro každého, kdo přijde o práci.'],robotsS:['Roboti běžní','2029: „Roboti se stávají běžnými“; Safer-4 řídí ekonomickou transformaci, HDP roste stratosféricky.'],ubiS:['Většinu práce dělají AI','2030: „Za pár let budou téměř vše dělat AI a roboti“; část lidí má provizorní státní místa, ostatní pobírají štědrý základní příjem.']},
     mSummary:'Jak je scénář AI 2027 přepočten na nezaměstnanost',
     mBody:'<p>Scénář <a href="https://ai-2027.com/" target="_blank" rel="noopener">AI 2027</a> (Kokotajlo a kol., duben 2025) popisuje po měsících cestu k superinteligenci a její dopady; <a href="https://ai2027tracker.com/" target="_blank" rel="noopener">AI 2027 Tracker</a> průběžně známkuje jeho předpovědi (k červenci 2026: 43 z 58 sledovaných tvrzení potvrzeno, 9 částečně, 5 vyvráceno – hlavně o čínské konsolidaci a výpočetním výkonu). Scénář neuvádí čísla nezaměstnanosti, jen dějové milníky; oranžová čára je náš odhad, co by tyto milníky znamenaly pro český ukazatel PNO.</p><ul><li><b>Základ:</b> poslední skutečná hodnota + mírný trend +0.3 p. b. ročně (polovina tempa posledních dvou let) + průměrná sezónnost 2015–2024 vypočtená z dat MPSV.</li><li><b>Šok z AI:</b> kumulativní podíl zaměstnaných (15–64 let, cca 5.0 mil.) čistě vytlačených AI a roboty, po odečtení nově vzniklých míst a náboru do robotických továren: konec „Race“ 0.2 % (12/2026) → 3 % (12/2027) → 13 % (12/2028) → 30 % (12/2029) → 36 % (12/2030, plató „charády a UBI“); konec „Slowdown“ je zpočátku mírnější (2 % → 9 % → 22 %) a v roce 2030 dobíhá na 35 %, protože nasazení je řízené, ale roboti a AI nakonec „dělají téměř vše“. Mezi kotvami je průběh vyhlazen monotónní kubickou křivkou.</li><li><b>Přepočet na PNO:</b> vytlačení × 0.72 (poměr zaměstnaných k populaci 15–64 let, cca 7.0 mil.) × 0.85 (podíl, který se registruje na ÚP – předpokládáme, že registrace zůstane branou k podpoře, rekvalifikacím i základnímu příjmu). 1 % vytlačených tak zvedne PNO o 0.61 p. b.</li><li><b>Tempo:</b> autoři i tracker uvádějí, že skutečný vývoj běží zhruba na 65–70 % předpokládané rychlosti a načasování může být o roky jinde; přepínač „Tempo“ posune všechny milníky o 12 nebo 24 měsíců.</li><li><b>Regiony:</b> stejný národní šok se přičítá k regionálnímu základu; rozdíly ve struktuře profesí (Praha vs. průmyslové kraje) nejsou modelovány.</li></ul><p>Jde o ilustraci scénáře, ne o prognózu MPSV ani ČSÚ.</p>'},
@@ -263,7 +270,7 @@ const I18N = {
     partialCsu:'',partialMpsv:'',
     chartMeta:'{n} months · {a} – {b}',mom:'month on month',yoy:'year on year',rangeLbl:{ytd:'since January {y}',12:'1 year',36:'3 years',60:'5 years',120:'10 years',0:'since 2005'},
     scen:'AI 2027 scenario',scenOff:'Off',scenRace:'“Race” ending',scenSlow:'“Slowdown” ending',pace:'Pace',pace0:'As written',pace12:'One year slower',pace24:'Two years slower',
-    legActual:'Actual (MPSV)',legPred:'AI 2027 scenario · {e} · projected from {s} to {m}',endRace:'“Race” ending',endSlow:'“Slowdown” ending',thPred:'Scenario (%)',tipPred:'scenario',tipMs:'Scenario milestone',
+    legActual:'Actual (MPSV)',legPred:'AI 2027 scenario · {e} · {s} to {m}',estimate:'our estimate',detailTitle:'Actual data, close up',detailMeta:'own axis scale',endRace:'“Race” ending',endSlow:'“Slowdown” ending',thPred:'Scenario (%)',tipPred:'scenario',tipMs:'Scenario milestone',
     ms:{late2026:['AI starts taking jobs','Late 2026: “AI Takes Some Jobs” – junior developer market in turmoil, 10,000-person anti-AI protest in DC.'],agent3mini:['Agent-3-mini goes public','July 2027: “The Cheap Remote Worker” – 10× cheaper and better than a typical OpenBrain employee; hiring of programmers nearly stops; government promises retraining and unemployment insurance.'],agent5:['Agent-5 in the economy','Turn of 2027/28: Agent-5 deployed publicly and “begins to transform the economy”; GDP balloons while people lose jobs.'],sez:['Special economic zones','2028: US and China set up SEZs, Wall Street invests trillions, “displaced human workers pour in” for eye-popping salaries.'],robots:['A million robots a month','End of 2028: factories produce a million new robots a month; the robot economy doubles in under a year.'],ubi:['Charade jobs and UBI','Late 2029: “Everyone else either performs a charade of doing their job or collects an incredibly luxurious universal basic income.”'],takeover:['2030: takeover','The “Race” ending closes in 2030 with an AI takeover; projecting beyond it is meaningless.'],pause:['Pause and Safer-1','November 2027: after the leaked memo OpenBrain halts Agent-4 and moves to Safer models; Congress passes one-off payments to displaced workers.'],sezS:['Special economic zones','2028: SEZs for the robot economy; factories run round the clock with freshly hired humans directed by AI.'],election:['2028 election: basic income','November 2028: “ordinary people see job losses accelerating”; both parties promise a basic income for anyone who loses their job.'],robotsS:['Robots commonplace','2029: “Robots become commonplace”; Safer-4 manages the economic transition, GDP growth is stratospheric.'],ubiS:['AIs do almost everything','2030: “In a few years almost everything will be done by AIs and robots”; some people hold makeshift government jobs, the rest collect a generous basic income.']},
     mSummary:'How the AI 2027 scenario is converted into an unemployment path',
     mBody:'<p>The <a href="https://ai-2027.com/" target="_blank" rel="noopener">AI 2027</a> scenario (Kokotajlo et al., April 2025) narrates a month-by-month path to superintelligence and its fallout; the <a href="https://ai2027tracker.com/" target="_blank" rel="noopener">AI 2027 Tracker</a> grades its predictions as they come due (as of July 2026: 43 of 58 tracked claims confirmed, 9 partially, 5 debunked, mostly about Chinese consolidation and training compute). The scenario gives no unemployment figures, only narrative milestones; the orange line is our estimate of what those milestones would mean for the Czech PNO indicator.</p><ul><li><b>Baseline:</b> the last actual value plus a mild trend of +0.3 pp a year (half the pace of the last two years) plus the average 2015–2024 seasonal pattern computed from the MPSV data.</li><li><b>AI shock:</b> the cumulative share of employed people aged 15–64 (about 5.0 million) net displaced by AI and robots, after new jobs and hiring into robot factories: “Race” ending 0.2 % (Dec 2026) → 3 % (Dec 2027) → 13 % (Dec 2028) → 30 % (Dec 2029) → 36 % (Dec 2030, the “charade and UBI” plateau); the “Slowdown” ending is gentler at first (2 % → 9 % → 22 %) and catches up to 35 % in 2030, because deployment is managed but robots and AIs end up “doing almost everything”. Between anchors the path is smoothed with a monotone cubic curve.</li><li><b>Conversion to PNO:</b> displacement × 0.72 (employed relative to the 15–64 population of about 7.0 million) × 0.85 (share who register at the Labour Office – we assume registration stays the gateway to benefits, retraining and basic income). Each 1 % displaced therefore lifts PNO by 0.61 pp.</li><li><b>Pace:</b> the authors and the tracker both note that reality is running at roughly 65–70 % of the predicted speed and that timing could be off by years; the “Pace” switch shifts every milestone by 12 or 24 months.</li><li><b>Regions:</b> the same national shock is added to each region\'s own baseline; differences in occupational structure (Prague vs. industrial regions) are not modelled.</li></ul><p>This is an illustration of the scenario, not a forecast by MPSV or the Statistical Office.</p>'}
@@ -279,7 +286,7 @@ const state = {
   scen: 'race',
   delay: 0,
   table: false,
-  hover: -1
+  hoverYm: null
 };
 if(ORDER.indexOf(state.region)<0) state.region='CZ';
 if(state.lang!=='cs'&&state.lang!=='en') state.lang='cs';
@@ -433,7 +440,6 @@ function applyI18n(){
   document.getElementById('toggle-table').textContent=t(state.table?'hideTable':'showTable');
   document.querySelectorAll('#lang button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.l===state.lang)));
   document.querySelectorAll('#range button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.n===String(state.range))));
-  document.querySelectorAll('#kind button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.k===state.kind)));
   document.getElementById('scen').value=state.scen; document.getElementById('delay').value=String(state.delay);
   document.getElementById('delay-field').hidden=state.scen==='off';
   document.getElementById('method-body').innerHTML=t('mBody');
@@ -477,99 +483,85 @@ function render(){
   if(on){ document.getElementById('leg-pred').textContent=t('legPred').replace('{e}',t(state.scen==='race'?'endRace':'endSlow')).replace('{s}',fmtMonth(pred[Math.min(1,pred.length-1)].ym,'short')).replace('{m}',fmtMonth(pred[pred.length-1].ym,'short')); document.getElementById('chart-meta').textContent=t('chartMeta').replace('{n}',xs.length).replace('{a}',fmtMonth(pts[0].ym,'short')).replace('{b}',fmtMonth(pred[pred.length-1].ym,'short')); }
   const ml=document.getElementById('mslist'); ml.innerHTML=''; ml.hidden=!on;
   if(on){ let k=0; xs.forEach(q=>{ if(!q.ms) return; k++; const li=document.createElement('li'); const b=document.createElement('b'); b.textContent=k; const em=document.createElement('em'); em.textContent=fmtMonth(q.ym,'short'); li.appendChild(b); li.appendChild(document.createTextNode(t('ms')[q.ms][0]+' ')); li.appendChild(em); ml.appendChild(li); }); }
-  drawChart(xs, all);
+  drawChart(xs, all, 'main');
+  const det=document.getElementById('detail'); det.hidden=!on;
+  if(on){ document.getElementById('detail-title').textContent=t('detailTitle'); drawChart(xs.filter(q=>q.v!=null), all, 'detail'); }
   renderTable(xs, all);
 }
 
-let geom=null;
+const CH={main:{svg:'chart',wrap:'chart-wrap',tip:'tip',h:380,hs:280,ms:true},detail:{svg:'chart-detail',wrap:'chart-wrap-detail',tip:'tip-detail',h:200,hs:170,ms:false}};
+const geoms={}; let hoverKey='main';
 function scaleFor(lo, hi, maxTicks){ const steps=[0.05,0.1,0.2,0.25,0.5,1,2,5,10]; for(const st of steps){ const y0=Math.floor(lo/st+1e-9)*st, top=Math.ceil(hi/st-1e-9)*st; if(Math.round((top-y0)/st)<=maxTicks) return {y0:Math.max(0,y0),top,step:st}; } return {y0:0,top:Math.ceil(hi/10)*10,step:10}; }
-function drawChart(pts, all){
-  const svg=document.getElementById('chart'); const wrap=document.getElementById('chart-wrap');
-  const W=Math.max(320, wrap.clientWidth||800); const H=W<560?280:380;
-  const M={l:50,r:14,t:34,b:30}; const pw=W-M.l-M.r, ph=H-M.t-M.b;
-  const vals=pts.map(p=>p.v!=null?p.v:p.p).filter(v=>v!=null); const vmax=Math.max(...vals), vmin=Math.min(...vals);
-  const isBar=state.kind==='bar'; const hasPred=pts.some(p=>p.p!=null);
-  const maxT=H<300?8:12; let sc; if(isBar) sc=scaleFor(0, vmax*1.08, maxT); else { const pad=Math.max((vmax-vmin)*0.08, 0.05); sc=scaleFor(vmin-pad, vmax+pad, maxT); }
-  const {y0,top,step}=sc;
+function drawChart(pts, all, key){
+  const cfg=CH[key]; const svg=document.getElementById(cfg.svg); const wrap=document.getElementById(cfg.wrap);
+  if(!pts.length){ svg.innerHTML=''; delete geoms[key]; return; }
+  const W=Math.max(320, wrap.clientWidth||800); const H=W<560?cfg.hs:cfg.h;
+  const M={l:50,r:14,t:cfg.ms?34:16,b:30}; const pw=W-M.l-M.r, ph=H-M.t-M.b;
+  const vals=[]; pts.forEach(p=>{ if(p.v!=null) vals.push(p.v); if(p.p!=null) vals.push(p.p); }); const vmax=Math.max(...vals), vmin=Math.min(...vals);
+  const hasPred=pts.some(p=>p.p!=null);
+  const maxT=H<220?5:H<300?8:12; const pad=Math.max((vmax-vmin)*0.08, 0.05); const {y0,top,step}=scaleFor(vmin-pad, vmax+pad, maxT);
   const n=pts.length; const slot=pw/n;
   const xc=i=>M.l+slot*(i+0.5); const y=v=>M.t+ph-(v-y0)/(top-y0)*ph;
   const ns='http://www.w3.org/2000/svg'; const el=(tag,at)=>{ const e=document.createElementNS(ns,tag); for(const k in at) e.setAttribute(k,at[k]); return e; };
   svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.setAttribute('width',W); svg.setAttribute('height',H); svg.innerHTML='';
-  // grid + y ticks
-  const g=el('g',{class:'grid'});
-  const nT=Math.round((top-y0)/step);
-  for(let k=0;k<=nT;k++){ const v=Math.round((y0+k*step)*1000)/1000;
-    const yy=Math.round(y(v))+0.5; if(k>0||!isBar) g.appendChild(el('line',{x1:M.l,x2:W-M.r,y1:yy,y2:yy}));
-    const tx=el('text',{x:M.l-8,y:yy+4,'text-anchor':'end'}); tx.textContent=new Intl.NumberFormat('en-GB',{maximumFractionDigits:2}).format(v)+'%'; svg.appendChild(tx);
-  }
+  const g=el('g',{class:'grid'}); const nT=Math.round((top-y0)/step);
+  for(let k=0;k<=nT;k++){ const v=Math.round((y0+k*step)*1000)/1000; const yy=Math.round(y(v))+0.5; g.appendChild(el('line',{x1:M.l,x2:W-M.r,y1:yy,y2:yy}));
+    const tx=el('text',{x:M.l-8,y:yy+4,'text-anchor':'end'}); tx.textContent=new Intl.NumberFormat('en-GB',{maximumFractionDigits:2}).format(v)+'%'; svg.appendChild(tx); }
   svg.appendChild(g);
-  // x ticks: label Januaries (or every k years), months when 12
   const yearStep=n<=84?1:n<=156?2:5;
-  pts.forEach((p,i)=>{
-    const [yr,mo]=p.ym.split('-').map(Number); let label=null;
+  pts.forEach((p,i)=>{ const [yr,mo]=p.ym.split('-').map(Number); let label=null;
     if(n<=12) label=new Intl.DateTimeFormat(state.lang==='cs'?'cs-CZ':'en-GB',{month:'short'}).format(ymDate(p.ym)).replace('.','')+(mo===1||i===0?' '+yr:'');
     else if(mo===1 && yr%yearStep===0) label=String(yr);
-    else if(n<=36 && (mo===7)) label=state.lang==='cs'?'VII':'Jul';
-    if(label){ const tx=el('text',{x:xc(i),y:H-M.b+18,'text-anchor':'middle'}); tx.textContent=label; svg.appendChild(tx); }
-  });
-  // marks
+    else if(n<=36 && mo===7) label=state.lang==='cs'?'VII':'Jul';
+    if(label){ const tx=el('text',{x:xc(i),y:H-M.b+18,'text-anchor':'middle'}); tx.textContent=label; svg.appendChild(tx); } });
   const hoverBand=el('rect',{class:'hoverband',x:0,y:M.t,width:0,height:ph,opacity:0}); svg.appendChild(hoverBand);
   const marks=el('g',{class:'marks'}); svg.appendChild(marks);
-  const bars=[];
-  if(isBar){
-    const bw=Math.min(24, Math.max(1, slot-2)); const r=Math.min(4, bw/2);
-    pts.forEach((p,i)=>{ if(p.v==null) return; const x=xc(i)-bw/2, yt=y(p.v), yb=M.t+ph; const h=Math.max(0,yb-yt);
-      const rr=Math.min(r,h); const d='M'+x+' '+yb+'V'+(yt+rr)+'Q'+x+' '+yt+' '+(x+rr)+' '+yt+'H'+(x+bw-rr)+'Q'+(x+bw)+' '+yt+' '+(x+bw)+' '+(yt+rr)+'V'+yb+'Z';
-      const b=el('path',{class:'bar'+((i===n-1||(pts[i+1]&&pts[i+1].v==null))?' latest':''),d}); marks.appendChild(b); bars[i]=b; });
-  } else {
-    let d='', a=''; let open=false;
-    pts.forEach((p,i)=>{ if(p.v==null){open=false;return;} const X=xc(i).toFixed(1), Y=y(p.v).toFixed(1); d+=(open?'L':'M')+X+' '+Y; open=true; });
-    // area: single contiguous assumption for wash
-    const first=pts.findIndex(p=>p.v!=null); let lastI=n-1; while(lastI>0&&pts[lastI].v==null) lastI--;
-    a=d.replace(/M/g,'L').replace(/^L/,'M')+'L'+xc(lastI).toFixed(1)+' '+(M.t+ph)+'L'+xc(first).toFixed(1)+' '+(M.t+ph)+'Z';
-    marks.appendChild(el('path',{class:'area',d:a})); marks.appendChild(el('path',{class:'line',d}));
-    marks.appendChild(el('circle',{class:'dot',cx:xc(lastI),cy:y(pts[lastI].v),r:4.5}));
-  }
-  if(hasPred){ let pd='', po=false; pts.forEach((p,i)=>{ if(p.p==null){po=false;return;} pd+=(po?'L':'M')+xc(i).toFixed(1)+' '+y(p.p).toFixed(1); po=true; }); marks.appendChild(el('path',{class:'pline',d:pd})); if(pts[n-1].p!=null) marks.appendChild(el('circle',{class:'pdot',cx:xc(n-1),cy:y(pts[n-1].p),r:4})); }
-  // baseline
+  let d='', open=false; pts.forEach((p,i)=>{ if(p.v==null){open=false;return;} d+=(open?'L':'M')+xc(i).toFixed(1)+' '+y(p.v).toFixed(1); open=true; });
+  const first=pts.findIndex(p=>p.v!=null); let lastI=n-1; while(lastI>0&&pts[lastI].v==null) lastI--;
+  if(first>=0){ const a=d.replace(/M/g,'L').replace(/^L/,'M')+'L'+xc(lastI).toFixed(1)+' '+(M.t+ph)+'L'+xc(first).toFixed(1)+' '+(M.t+ph)+'Z';
+    marks.appendChild(el('path',{class:'area',d:a})); marks.appendChild(el('path',{class:'line',d})); }
+  if(hasPred){ let pd='', po=false; pts.forEach((p,i)=>{ if(p.p==null){po=false;return;} pd+=(po?'L':'M')+xc(i).toFixed(1)+' '+y(p.p).toFixed(1); po=true; }); marks.appendChild(el('path',{class:'pline',d:pd})); if(pts[n-1].p!=null&&pts[n-1].v==null) marks.appendChild(el('circle',{class:'pdot',cx:xc(n-1),cy:y(pts[n-1].p),r:4})); }
+  if(first>=0) marks.appendChild(el('circle',{class:'dot',cx:xc(lastI),cy:y(pts[lastI].v),r:4.5}));
   svg.appendChild(el('line',{class:'baseline',x1:M.l,x2:W-M.r,y1:Math.round(M.t+ph)+0.5,y2:Math.round(M.t+ph)+0.5}));
-  // direct label on latest
-  let lastA=n-1; while(lastA>0&&pts[lastA].v==null) lastA--;
-  const LA=pts[lastA]; if(LA&&LA.v!=null){ const nearEdge=xc(lastA)>W-M.r-30; const tx=el('text',{class:'dlabel',x:nearEdge?xc(lastA)+2:xc(lastA),y:y(LA.v)-10,'text-anchor':nearEdge?'end':'middle'}); tx.textContent=fmtPct(LA.v,2); svg.appendChild(tx); }
-  const LP=pts[n-1]; if(hasPred&&LP.p!=null){ const tx=el('text',{class:'dlabel',x:xc(n-1)+2,y:y(LP.p)-10,'text-anchor':'end'}); tx.textContent=fmtPct(LP.p,1); svg.appendChild(tx); }
-  if(hasPred){ const g2=el('g',{class:'ms'}); let k=0; pts.forEach((p,i)=>{ if(!p.ms) return; k++; const x=Math.round(xc(i))+0.5; g2.appendChild(el('line',{x1:x,x2:x,y1:M.t-4,y2:M.t+ph})); g2.appendChild(el('circle',{cx:xc(i),cy:M.t-12,r:8})); const tx=el('text',{x:xc(i),y:M.t-8.5,'text-anchor':'middle'}); tx.textContent=k; g2.appendChild(tx); }); svg.appendChild(g2); }
-  // crosshair + hit layer
+  const LA=pts[lastI]; if(LA&&LA.v!=null){ const nearEdge=xc(lastI)>W-M.r-30; const tx=el('text',{class:'dlabel',x:nearEdge?xc(lastI)+2:xc(lastI),y:y(LA.v)-10,'text-anchor':nearEdge?'end':'middle'}); tx.textContent=fmtPct(LA.v,2); svg.appendChild(tx); }
+  const LP=pts[n-1]; if(hasPred&&LP.p!=null&&LP.v==null){ const tx=el('text',{class:'dlabel',x:xc(n-1)+2,y:y(LP.p)-10,'text-anchor':'end'}); tx.textContent=fmtPct(LP.p,1); svg.appendChild(tx); }
+  if(hasPred&&cfg.ms){ const g2=el('g',{class:'ms'}); let k=0; pts.forEach((p,i)=>{ if(!p.ms) return; k++; const x=Math.round(xc(i))+0.5; g2.appendChild(el('line',{x1:x,x2:x,y1:M.t-4,y2:M.t+ph})); g2.appendChild(el('circle',{cx:xc(i),cy:M.t-12,r:8})); const tx=el('text',{x:xc(i),y:M.t-8.5,'text-anchor':'middle'}); tx.textContent=k; g2.appendChild(tx); }); svg.appendChild(g2); }
   const xh=el('line',{class:'xhair',x1:0,x2:0,y1:M.t,y2:M.t+ph,opacity:0}); svg.appendChild(xh);
   const hit=el('rect',{class:'hit',x:M.l,y:M.t,width:pw,height:ph}); svg.appendChild(hit);
-  geom={pts,all,M,pw,ph,slot,xc,y,W,H,bars,hoverBand,xh};
-  const onMove=ev=>{ const rect=svg.getBoundingClientRect(); const sx=(ev.clientX-rect.left)*(W/rect.width); const i=Math.max(0,Math.min(n-1,Math.floor((sx-M.l)/slot))); setHover(i); };
+  geoms[key]={pts,all,M,pw,ph,slot,xc,y,W,H,hoverBand,xh};
+  const onMove=ev=>{ const rect=svg.getBoundingClientRect(); const sx=(ev.clientX-rect.left)*(W/rect.width); const i=Math.max(0,Math.min(n-1,Math.floor((sx-M.l)/slot))); setHover(pts[i].ym,key); };
   hit.addEventListener('pointermove',onMove); hit.addEventListener('pointerdown',onMove);
-  hit.addEventListener('pointerleave',()=>setHover(-1));
-  if(state.hover>=0) setHover(Math.min(state.hover,n-1)); else setHover(-1);
+  hit.addEventListener('pointerleave',()=>setHover(null,key));
+  if(state.hoverYm) setHover(state.hoverYm,hoverKey); else setHover(null,key);
 }
-function setHover(i){
-  if(!geom) return; const {pts,all,M,ph,slot,xc,y,W,bars,hoverBand,xh}=geom; const tip=document.getElementById('tip');
-  state.hover=i;
-  bars.forEach((b,k)=>{ if(b) b.classList.toggle('hot', k===i); });
-  if(i<0||!pts[i]){ tip.hidden=true; hoverBand.setAttribute('opacity',0); xh.setAttribute('opacity',0); return; }
-  const p=pts[i]; const gi=all.findIndex(q=>q.ym===p.ym); const prev=gi>0?all[gi-1]:null, ly=gi>=12?all[gi-12]:null;
-  const mom=(p.v!=null&&prev&&prev.v!=null)?p.v-prev.v:null, yoy=(p.v!=null&&ly&&ly.v!=null)?p.v-ly.v:null;
-  hoverBand.setAttribute('x',xc(i)-slot/2); hoverBand.setAttribute('width',Math.max(slot,2)); hoverBand.setAttribute('opacity',1);
-  xh.setAttribute('x1',xc(i)); xh.setAttribute('x2',xc(i)); xh.setAttribute('opacity',state.kind==='bar'?0:1);
-  tip.innerHTML='';
-  const d1=document.createElement('div'); d1.className='t'; d1.textContent=fmtMonth(p.ym); tip.appendChild(d1);
-  if(p.v!=null){ const d2=document.createElement('div'); d2.className='v'; const key=document.createElement('i'); d2.appendChild(key); d2.appendChild(document.createTextNode(fmtPct(p.v,2))); tip.appendChild(d2);
-    const d3=document.createElement('div'); d3.className='d';
-    [[t('mom'),mom],[t('yoy'),yoy]].forEach(([k,v])=>{ const s=document.createElement('span'); s.textContent=k; const b=document.createElement('b'); b.textContent=fmtDelta(v); b.className=deltaClass(v); d3.appendChild(s); d3.appendChild(b); });
-    tip.appendChild(d3); }
-  if(p.p!=null&&!p.o){ const d2=document.createElement('div'); d2.className='v p'; const key=document.createElement('i'); d2.appendChild(key); d2.appendChild(document.createTextNode(fmtPct(p.p,2))); tip.appendChild(d2);
-    const d4=document.createElement('div'); d4.className='d'; const s=document.createElement('span'); s.textContent=t('tipPred'); const b=document.createElement('b'); b.textContent=t(state.scen==='race'?'endRace':'endSlow'); d4.appendChild(s); d4.appendChild(b); tip.appendChild(d4); }
-  if(p.ms){ const d5=document.createElement('div'); d5.className='ms'; const b=document.createElement('b'); b.textContent=t('ms')[p.ms][0]; d5.appendChild(b); d5.appendChild(document.createElement('br')); d5.appendChild(document.createTextNode(t('ms')[p.ms][1])); tip.appendChild(d5); tip.style.maxWidth='300px'; } else tip.style.maxWidth='';
-  tip.hidden=false;
-  const wrap=document.getElementById('chart-wrap'); const scale=wrap.clientWidth/W; const px=xc(i)*scale; const py=(p.v!=null?y(p.v):p.p!=null?y(p.p):M.t)*scale;
-  const tw=tip.offsetWidth, th=tip.offsetHeight; let left=px+14; if(left+tw>wrap.clientWidth-4) left=px-14-tw; let top=py-th/2; top=Math.max(4,Math.min(top,(M.t+ph)*scale-th));
-  tip.style.left=left+'px'; tip.style.top=top+'px';
+function setHover(ym, key){
+  state.hoverYm=ym; if(key) hoverKey=key;
+  for(const k of Object.keys(geoms)){
+    const G=geoms[k]; const tip=document.getElementById(CH[k].tip); const i=ym?G.pts.findIndex(q=>q.ym===ym):-1;
+    if(i<0){ tip.hidden=true; G.hoverBand.setAttribute('opacity',0); G.xh.setAttribute('opacity',0); continue; }
+    G.hoverBand.setAttribute('x',G.xc(i)-G.slot/2); G.hoverBand.setAttribute('width',Math.max(G.slot,2)); G.hoverBand.setAttribute('opacity',1);
+    G.xh.setAttribute('x1',G.xc(i)); G.xh.setAttribute('x2',G.xc(i)); G.xh.setAttribute('opacity',1);
+    if(k!==hoverKey){ tip.hidden=true; continue; }
+    const p=G.pts[i]; const gi=G.all.findIndex(q=>q.ym===p.ym); const prev=gi>0?G.all[gi-1]:null, ly=gi>=12?G.all[gi-12]:null;
+    const mom=(p.v!=null&&prev&&prev.v!=null)?p.v-prev.v:null, yoy=(p.v!=null&&ly&&ly.v!=null)?p.v-ly.v:null;
+    tip.innerHTML='';
+    const d1=document.createElement('div'); d1.className='t'; d1.textContent=fmtMonth(p.ym); tip.appendChild(d1);
+    if(p.v!=null){ const d2=document.createElement('div'); d2.className='v'; d2.appendChild(document.createElement('i')); d2.appendChild(document.createTextNode(fmtPct(p.v,2))); tip.appendChild(d2);
+      const d3=document.createElement('div'); d3.className='d';
+      [[t('mom'),mom],[t('yoy'),yoy]].forEach(([kk,v])=>{ const sp=document.createElement('span'); sp.textContent=kk; const b=document.createElement('b'); b.textContent=fmtDelta(v); b.className=deltaClass(v); d3.appendChild(sp); d3.appendChild(b); });
+      tip.appendChild(d3); }
+    if(p.p!=null&&!p.o){ const d2=document.createElement('div'); d2.className='v p'; d2.appendChild(document.createElement('i')); d2.appendChild(document.createTextNode(fmtPct(p.p,2))); tip.appendChild(d2);
+      const d4=document.createElement('div'); d4.className='d'; const sp=document.createElement('span'); sp.textContent=t('tipPred'); const b=document.createElement('b'); b.textContent=t(state.scen==='race'?'endRace':'endSlow'); d4.appendChild(sp); d4.appendChild(b); tip.appendChild(d4); }
+    if(p.ms){ const d5=document.createElement('div'); d5.className='ms'; const b=document.createElement('b'); b.textContent=t('ms')[p.ms][0]; d5.appendChild(b); d5.appendChild(document.createElement('br')); d5.appendChild(document.createTextNode(t('ms')[p.ms][1])); tip.appendChild(d5); tip.style.maxWidth='300px'; } else tip.style.maxWidth='';
+    tip.hidden=false;
+    const wrap=document.getElementById(CH[k].wrap); const scale=wrap.clientWidth/G.W; const px=G.xc(i)*scale; const py=(p.v!=null?G.y(p.v):p.p!=null?G.y(p.p):G.M.t)*scale;
+    const tw=tip.offsetWidth, th=tip.offsetHeight; let left=px+14; if(left+tw>wrap.clientWidth-4) left=px-14-tw; let top=py-th/2; top=Math.max(4,Math.min(top,(G.M.t+G.ph)*scale-th));
+    tip.style.left=left+'px'; tip.style.top=top+'px';
+  }
 }
+function keyNav(key){ return e=>{ const G=geoms[key]; if(!G) return; const n=G.pts.length; let i=state.hoverYm?G.pts.findIndex(q=>q.ym===state.hoverYm):-1;
+  if(e.key==='ArrowRight') i=i<0?n-1:Math.min(n-1,i+1); else if(e.key==='ArrowLeft') i=i<0?n-1:Math.max(0,i-1); else if(e.key==='Home') i=0; else if(e.key==='End') i=n-1; else if(e.key==='Escape'){ setHover(null,key); return; } else return;
+  e.preventDefault(); setHover(G.pts[i].ym,key); }; }
 function renderTable(pts, all){
   const tb=document.querySelector('#table tbody'); tb.innerHTML='';
   document.getElementById('table-meta').textContent=document.getElementById('chart-meta').textContent;
@@ -585,15 +577,13 @@ function renderTable(pts, all){
 }
 
 // ---------- events ----------
-document.getElementById('range').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.range=b.dataset.n==='ytd'?'ytd':+b.dataset.n; state.hover=-1; render(); });
-document.getElementById('kind').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.kind=b.dataset.k; render(); });
+document.getElementById('range').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.range=b.dataset.n==='ytd'?'ytd':+b.dataset.n; state.hoverYm=null; render(); });
 document.getElementById('lang').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state.lang=b.dataset.l; store.set('pno2.lang',state.lang); render(); });
-document.getElementById('scen').addEventListener('change',e=>{ state.scen=e.target.value; state.hover=-1; render(); });
-document.getElementById('delay').addEventListener('change',e=>{ state.delay=+e.target.value; state.hover=-1; render(); });
+document.getElementById('scen').addEventListener('change',e=>{ state.scen=e.target.value; state.hoverYm=null; render(); });
+document.getElementById('delay').addEventListener('change',e=>{ state.delay=+e.target.value; state.hoverYm=null; render(); });
 document.getElementById('toggle-table').addEventListener('click',()=>{ state.table=!state.table; document.getElementById('tablecard').hidden=!state.table; render(); if(state.table) document.getElementById('tablecard').scrollIntoView({behavior:'smooth',block:'nearest'}); });
-document.getElementById('chart-wrap').addEventListener('keydown',e=>{ if(!geom) return; const n=geom.pts.length; if(e.key==='ArrowRight'){ setHover(state.hover<0?n-1:Math.min(n-1,state.hover+1)); e.preventDefault(); } else if(e.key==='ArrowLeft'){ setHover(state.hover<0?n-1:Math.max(0,state.hover-1)); e.preventDefault(); } else if(e.key==='Home'){ setHover(0); e.preventDefault(); } else if(e.key==='End'){ setHover(n-1); e.preventDefault(); } else if(e.key==='Escape'){ setHover(-1); } });
-document.getElementById('chart-wrap').addEventListener('blur',()=>{ if(!matchMedia('(hover:hover)').matches) return; setHover(-1); });
-let rt; new ResizeObserver(()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(regions){ const c=currentSlice(); drawChart(c.xs, c.all); } },80); }).observe(document.getElementById('chart-wrap'));
+for(const k of Object.keys(CH)){ const w=document.getElementById(CH[k].wrap); w.addEventListener('keydown',keyNav(k)); w.addEventListener('blur',()=>{ if(!matchMedia('(hover:hover)').matches) return; setHover(null,k); }); }
+let rt; new ResizeObserver(()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(regions){ const c=currentSlice(); drawChart(c.xs, c.all, 'main'); if(!document.getElementById('detail').hidden) drawChart(c.xs.filter(q=>q.v!=null), c.all, 'detail'); } },80); }).observe(document.getElementById('chart-wrap'));
 
 // ---------- boot ----------
 regions=snapshotRegions(); render();
