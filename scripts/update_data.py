@@ -45,7 +45,7 @@ ORDER = ["CZ", "CZ010", "CZ020", "CZ031", "CZ032", "CZ041", "CZ042", "CZ051",
 
 
 def fetch_json(url, timeout=60):
-    req = urllib.request.Request(url, headers={"User-Agent": "pno-cz updater", "Accept": "application/json"})
+    req = urllib.request.Request(url, headers={"User-Agent": "takeover-tracker updater", "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.load(r)
 

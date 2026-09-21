@@ -1,4 +1,4 @@
-# pno-cz
+# takeover-tracker
 
 Monthly **podíl nezaměstnaných osob** (share of unemployed persons, PNO) for Czechia since January 2005, as a single-page app, with an illustrative projection of the [AI 2027](https://ai-2027.com/) scenario laid over it.
 
