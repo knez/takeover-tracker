@@ -201,7 +201,7 @@ footer a:hover{text-decoration:underline}
       <h2 id="chart-title"></h2>
       <span class="meta" id="chart-meta"></span>
     </div>
-    <div class="legend" id="legend" hidden><span><i></i><span data-i18n="legActual">Skutečnost (MPSV)</span></span><span><i class="p"></i><span id="leg-pred"></span><span class="estimate" data-i18n="estimate">náš odhad</span></span></div>
+    <div class="legend" id="legend" hidden><span><i></i><span data-i18n="legActual">Skutečnost (MPSV)</span></span><span><i class="p"></i><span id="leg-pred"></span></span></div>
     <div class="chart-wrap" id="chart-wrap" tabindex="0" role="figure" aria-labelledby="chart-title">
       <svg class="chart" id="chart" xmlns="http://www.w3.org/2000/svg"></svg>
       <div class="tip" id="tip" hidden></div>
@@ -281,7 +281,7 @@ const store = {get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSO
 const state = {
   lang: store.get('pno2.lang','cs'),
   region: 'CZ',
-  range: 'ytd',
+  range: 12,
   kind: 'line',
   scen: 'race',
   delay: 0,
